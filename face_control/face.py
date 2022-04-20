@@ -6,9 +6,6 @@ import os
 import dlib
 import cv2
 
-
-from GazeTracking.gaze_tracking.calibration import Calibration
-
 # class Eye(object):
 #     """
 #     Class này định nghĩa mắt của người sử dụng.
@@ -30,15 +27,13 @@ class Face(object):
     Nó chứa điểm (face-landmarks) trên khuôn mặt.
     Có phương thức xác định điểm, xác định nhắm mắt (blink-detect), xác định cử chỉ đầu (headpose)
     """
-     
-    BLINK_THRESH = 0.18
 
     def __init__(self):
         self.frame = None
         self.nec_points = None
         self.left_eye = None
         self.right_eye = None
-        self.calibration = Calibration()
+        # self.calibration = Calibration()
 
         #_face_detect được sử dụng để xác định khuôn mặt
         self._face_detector = dlib.get_frontal_face_detector()
@@ -69,9 +64,8 @@ class Face(object):
         self.frame = frame
         self._analyze()
 
-    def eye_aspect_ratio(self):
-        eye = self.right_eye
-        
+    def left_eye_aspect_ratio(self):
+        eye = self.left_eye
         #Tính chiều rộng khuôn mắt
         A = dist.euclidean(eye[1], eye[5])
         B = dist.euclidean(eye[2], eye[4])
@@ -79,7 +73,17 @@ class Face(object):
         C = dist.euclidean(eye[0], eye[3])
         #Tính tỉ lệ nhắm của mắt
         ear = (A + B) / (2.0 * C)
+        return ear
 
+    def right_eye_aspect_ratio(self):
+        eye = self.right_eye
+        #Tính chiều rộng khuôn mắt
+        A = dist.euclidean(eye[1], eye[5])
+        B = dist.euclidean(eye[2], eye[4])
+        #Tính chiều dài khuôn mắt
+        C = dist.euclidean(eye[0], eye[3])
+        #Tính tỉ lệ nhắm của mắt
+        ear = (A + B) / (2.0 * C)
         return ear
 
     def get_head_pose_vector(self):
@@ -134,10 +138,19 @@ class Face(object):
         return (start, end)
 
 
-
     """
     CẦN THÊM MỘT FUNCTION VISUALIZE
     """
+    def annotated_frame(self):
+        """Returns the main frame with pupils highlighted and draw contours for eyes"""
+        frame = self.frame.copy()
+
+        #draw contours for eyes
+
+        cv2.drawContours(frame, [self.left_eye], -1, (0, 255, 0), 1)
+        cv2.drawContours(frame, [self.right_eye], -1, (0, 255, 0), 1)
+
+        return frame
     
         
     
