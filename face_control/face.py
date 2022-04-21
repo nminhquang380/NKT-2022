@@ -33,6 +33,8 @@ class Face(object):
         self.nec_points = None
         self.left_eye = None
         self.right_eye = None
+        self.vector = None
+        self.check = False
         # self.calibration = Calibration()
 
         #_face_detect được sử dụng để xác định khuôn mặt
@@ -49,15 +51,23 @@ class Face(object):
         faces = self._face_detector(frame)
 
         """Xác định điểm trên khuôn mặt"""
-        landmarks = self._predictor(frame, faces[0])
-        landmarks = face_utils.shape_to_np(landmarks)
+        try:
+            landmarks = self._predictor(frame, faces[0])
+            landmarks = face_utils.shape_to_np(landmarks)
 
-        self.left_eye = landmarks[42:48]
-        self.right_eye = landmarks[36:42]
-        self.nec_points = np.float32([landmarks[17], landmarks[21], landmarks[22], landmarks[26], 
-                            landmarks[36], landmarks[39], landmarks[42], landmarks[45], 
-                            landmarks[31], landmarks[35], landmarks[48], landmarks[54], 
-                            landmarks[57], landmarks[8]])
+            self.left_eye = landmarks[42:48]
+            self.right_eye = landmarks[36:42]
+            self.nec_points = np.float32([landmarks[17], landmarks[21], landmarks[22], landmarks[26], 
+                                landmarks[36], landmarks[39], landmarks[42], landmarks[45], 
+                                landmarks[31], landmarks[35], landmarks[48], landmarks[54], 
+                                landmarks[57], landmarks[8]])
+            self.check = True
+
+        except IndexError:
+            self.left_eye = None
+            self.right_eye = None
+            self.nec_points = None
+            self.check = False
 
     def refesh(self, frame):
         """Để xác định lại cho frame mới"""
@@ -143,12 +153,17 @@ class Face(object):
     """
     def annotated_frame(self):
         """Returns the main frame with pupils highlighted and draw contours for eyes"""
+
         frame = self.frame.copy()
-
-        #draw contours for eyes
-
-        cv2.drawContours(frame, [self.left_eye], -1, (0, 255, 0), 1)
-        cv2.drawContours(frame, [self.right_eye], -1, (0, 255, 0), 1)
+        # Vẽ vector của tư thế đầu
+        # Vẽ đường viền cho mắt
+        if self.check:
+            vector = self.get_head_pose_vector()
+            start = vector[1]
+            end = (start[0]+(vector[1][0] - vector[0][0]), start[1]+(vector[1][1] - vector[0][1]))
+            cv2.line(frame, start, end,(0, 0, 255))
+            cv2.drawContours(frame, [self.left_eye], -1, (0, 255, 0), 1)
+            cv2.drawContours(frame, [self.right_eye], -1, (0, 255, 0), 1)
 
         return frame
     
