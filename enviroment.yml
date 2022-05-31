@@ -1,0 +1,8 @@
+name: NKT
+channels:
+  - conda-forge
+  - anaconda
+  - defaults
+dependencies:
+  - pip
+  - python=3.6

@@ -1,0 +1,10 @@
+numpy == 1.16.1
+opencv_python == 4.2.0.32
+dlib == 19.16.0
+PyAutoGUI == 0.9.53
+mouse
+wheel == 0.37.1
+cmake == 3.22.3
+numpy == 1.22.3
+imutils == 0.5.4
+dlib == 19.17.0
