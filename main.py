@@ -3,7 +3,6 @@ import mouse
 from face_control import Face
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 
 face = Face()
 webcam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -21,8 +20,12 @@ right_click = 0
 both_click = 0
 mouth_click = 0
 
-# biến đếm thời gian t
-t = 0
+
+def process_exists():
+    call = 'TASKLIST', '/FI', 'imagename eq %s' % 'osk.exe'
+    output = subprocess.check_output(call).decode()
+    last_line = output.strip().split('\r\n')[-1]
+    return last_line.lower().startswith('osk.exe'.lower())
 
 while True:
     # Nhận frame từ webcam
@@ -118,7 +121,10 @@ while True:
             mouth_click += 1
         else:
             if mouth_click >= 30:
-                open_osk = subprocess.Popen('osk.exe', shell=True)
+                if process_exists():
+                    os.system('TASKKILL /IM osk.exe')
+                else:     
+                    open_osk = subprocess.Popen('osk.exe', shell=True)
             mouth_click = 0
         
         
