@@ -5,6 +5,7 @@ import imutils
 import os
 import dlib
 import cv2
+from face_control import control, face_recognize_model
 
 # class Eye(object):
 #     """
@@ -20,8 +21,6 @@ import cv2
 #         self.side = None
 #         self.landnarks = None
 
-from face_control import control, face_recognize_model
-
 class Face(object):
     """
     Class này ghi nhận khuôn mặt người dùng.
@@ -34,6 +33,9 @@ class Face(object):
         self.nec_points = None
         self.left_eye = None
         self.right_eye = None
+        self.left_eyebrow = None
+        self.right_eyebrow = None
+        self.mouth = None
         self.vector = None
         self.check = False
         # self.calibration = Calibration()
@@ -58,6 +60,9 @@ class Face(object):
 
             self.left_eye = landmarks[42:48]
             self.right_eye = landmarks[36:42]
+            self.left_eyebrow = landmarks[17:21]
+            self.right_eyebrow = landmarks[22:26]
+            self.mouth = landmarks[48:68]
             self.nec_points = np.float32([landmarks[17], landmarks[21], landmarks[22], landmarks[26], 
                                 landmarks[36], landmarks[39], landmarks[42], landmarks[45], 
                                 landmarks[31], landmarks[35], landmarks[48], landmarks[54], 
@@ -96,6 +101,92 @@ class Face(object):
         #Tính tỉ lệ nhắm của mắt
         ear = (A + B) / (2.0 * C)
         return ear
+
+    def left_eyebrow_ratio(self):
+        eyebrow = self.left_eyebrow
+        eye = self.left_eye
+
+        """
+        Hiện tại công thức tính độ nhướn mày của mắt sẽ là:
+        ER = A / B 
+         + A là khoảng cách giữa tâm mắt và tâm của lông máy
+         + B là độ dài của khuôn mắt
+        Note: Nhưng công thức có vẻ chưa được tối ưu
+        """
+        # Vị trí trung tâm của mắt   
+        eye_center = [0,0]
+        for p in eye:
+            eye_center[0] += p[0]
+            eye_center[1] += p[1]
+        eye_center[0] /= len(eye) 
+        eye_center[1] /= len(eye)
+        
+        # Vị trí trung tâm của lông mày
+        eyebrow_center = [0,0]
+        for p in eyebrow:
+            eyebrow_center[0] += p[0]
+            eyebrow_center[1] += p[1]
+        eyebrow_center[0] /= len(eyebrow) 
+        eyebrow_center[1] /= len(eyebrow)
+
+        # Độ dài khuôn mắt
+        B = dist.euclidean(eye[0], eye[3])
+
+        # Khoảng cách trung tâm lông mày và trung tâm mắt
+        A = dist.euclidean(eyebrow_center, eye_center)
+
+        # Tỉ lệ nhắm của mắt
+        ER = A / B
+
+        return ER
+
+    def right_eyebrow_ratio(self):
+        eyebrow = self.right_eyebrow
+        eye = self.right_eye
+
+        # Vị trí trung tâm của mắt   
+        eye_center = [0,0]
+        for p in eye:
+            eye_center[0] += p[0]
+            eye_center[1] += p[1]
+        eye_center[0] /= len(eye) 
+        eye_center[1] /= len(eye)
+        
+        # Vị trí trung tâm của lông mày
+        eyebrow_center = [0,0]
+        for p in eyebrow:
+            eyebrow_center[0] += p[0]
+            eyebrow_center[1] += p[1]
+        eyebrow_center[0] /= len(eyebrow) 
+        eyebrow_center[1] /= len(eyebrow)
+
+        # Độ dài khuôn mắt
+        B = dist.euclidean(eye[0], eye[3])
+
+        # Khoảng cách trung tâm lông mày và trung tâm mắt
+        A = dist.euclidean(eyebrow_center, eye_center)
+
+        # Tỉ lệ nhắm của mắt
+        ER = A / B
+
+        return ER
+        
+    def mouth_aspect_ratio(self):
+        """
+        Tính độ mở của miệng
+        """
+        mouth = self.mouth
+        # Tính độ rộng khuôn miệng
+        A = dist.euclidean(mouth[2], mouth[10]) # 51, 59
+        B = dist.euclidean(mouth[4], mouth[8]) # 53, 57
+
+        # Tính độ dài khuôn miệng
+        C = dist.euclidean(mouth[0], mouth[6]) # 49, 55
+
+        # Tính hệ số
+        mar = (A + B) / (2.0 * C)
+
+        return mar
 
     def get_head_pose_vector(self):
         """Xác định vector chỉ hướng đầu"""
@@ -165,6 +256,7 @@ class Face(object):
             cv2.line(frame, start, end,(0, 0, 255))
             cv2.drawContours(frame, [self.left_eye], -1, (0, 255, 0), 1)
             cv2.drawContours(frame, [self.right_eye], -1, (0, 255, 0), 1)
+            cv2.drawContours(frame, [self.mouth], -1, (0, 255, 0), 1)
             return frame
         
         else:

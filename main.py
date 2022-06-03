@@ -3,32 +3,33 @@ import mouse
 from face_control import Face
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
-open_osk = subprocess.Popen('osk.exe', shell=True)
 face = Face()
 webcam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 W, H = 0, 0
 cnt = 0
 BLINK_THRESH = 0.2
+MOUTH_THRESH = 0.8
 STEP = 2
 STEP_RATE = 0.005
 counter = 0
 
-# biến nhớ ear của 2 mắt.
-left_ear_old = 1
-right_ear_old = 1
-
-# đếm cqlick.
+# đếm click
 left_click = 0
 right_click = 0
 both_click = 0
+mouth_click = 0
+
+# biến đếm thời gian t
+t = 0
 
 while True:
     # Nhận frame từ webcam
     _, frame = webcam.read()
     # Gửi frame mới tới Face để phân tích
     face.refesh(frame)
-    # Visualize (hiện tại chưa có)
+    # Visualize 
     frame = face.annotated_frame()
     """Điều khiển chuột"""
     if face.check:
@@ -41,6 +42,13 @@ while True:
         left_ear = face.left_eye_aspect_ratio()
         right_ear = face.right_eye_aspect_ratio()
         ear = (left_ear+right_ear)/2
+
+        # Tính độ nhướn của lông mày
+        left_er = face.left_eyebrow_ratio()
+        right_er = face.left_eyebrow_ratio()
+
+        # Tính độ mở khuôn miệng
+        mar = face.mouth_aspect_ratio()
 
         # Tinh chỉnh tham số W, H, đồng thời tính thời gian mắt nhắm
         if cnt <= 120:
@@ -81,29 +89,12 @@ while True:
         # điều khiển click:
         # TODO: right-click, left-click, middle-click.
 
-        # if ear < BLINK_THRESH:
-        #     counter += 1
-        # else:
-        #     if counter >= DEEP_CLICK_FRAME:
-        #         mouse.click('right')
-        #     elif counter >= CLICK_FRAME:
-        #         mouse.click('left')
-        #     counter = 0
-        
-        # if left_ear_old < BLINK_THRESH and left_ear > BLINK_THRESH and not (right_ear_old < BLINK_THRESH and right_ear > BLINK_THRESH):
         if left_ear < BLINK_THRESH:
             left_click += 1
-        #     if left_click == 3:
-        #         mouse.click('left')
-        #         left_click = 0
-        #         right_click = 0
-        # # if right_ear_old < BLINK_THRESH and right_ear > BLINK_THRESH and not (left_ear_old < BLINK_THRESH and left_ear > BLINK_THRESH):
+        
         if right_ear < BLINK_THRESH:
             right_click += 1
-        #     if right_click == 3:
-        #         mouse.click('right')
-        #         right_click = 0
-        #         left_click = 0
+       
         if left_click >= 2 and right_click < 2:
             mouse.click('left')
             left_click = 0
@@ -122,30 +113,33 @@ while True:
         if right_ear >= BLINK_THRESH:
             right_click = 0
         
-        left_ear_old = left_ear
-        right_ear_old = right_ear
+        # Popup virtual keyboard
+        if mar >= MOUTH_THRESH:
+            mouth_click += 1
+        else:
+            if mouth_click >= 30:
+                open_osk = subprocess.Popen('osk.exe', shell=True)
+            mouth_click = 0
+        
+        
 
-        # show ear threshold và ear.
-        cv2.putText(frame, "left click: {:.2f}".format(left_click), (400, 30),
+        # cv2.putText(frame, "left click: {:.2f}".format(left_click), (400, 30),
+        #         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+        # cv2.putText(frame, "right click: {:.2f}".format(right_click), (400, 60),
+        #         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+        cv2.putText(frame, "ler = {:.2f}, rer = {:.2f}".format(left_er, right_er), (30,30),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-        cv2.putText(frame, "right click: {:.2f}".format(right_click), (400, 60),
+        cv2.putText(frame, "mar = {:.2f}".format(mar), (30,60),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-        cv2.putText(frame, "CNT={}, w = {:.2f}, h = {:.2f}".format(cnt,w,h), (30,30),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2) 
-        
-        # if cnt <= 600:
-        #     if cnt <= 300:
-        #         cv2.putText(frame, "Close your eyes for 5s after {:.2f}s ".format(5 - cnt/60), (180,200),
-        #         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2) 
-        
-        
         
         cv2.imshow("demo", frame)
+
     else:
         cv2.imshow("demo", frame)
-
+        
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
 
 webcam.release()
 cv2.destroyAllWindows()
