@@ -8,3 +8,4 @@ cmake == 3.22.3
 numpy == 1.22.3
 imutils == 0.5.4
 dlib == 19.17.0
+pyinstaller

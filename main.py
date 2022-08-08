@@ -133,15 +133,15 @@ while True:
         #         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
         # cv2.putText(frame, "right click: {:.2f}".format(right_click), (400, 60),
         #         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-        cv2.putText(frame, "ler = {:.2f}, rer = {:.2f}".format(left_er, right_er), (30,30),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-        cv2.putText(frame, "mar = {:.2f}".format(mar), (30,60),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+    #     cv2.putText(frame, "ler = {:.2f}, rer = {:.2f}".format(left_er, right_er), (30,30),
+    #             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+    #     cv2.putText(frame, "mar = {:.2f}".format(mar), (30,60),
+    #             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
         
-        cv2.imshow("demo", frame)
+    #     cv2.imshow("demo", frame)
 
-    else:
-        cv2.imshow("demo", frame)
+    # else:
+    #     cv2.imshow("demo", frame)
         
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
